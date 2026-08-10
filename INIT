@@ -1,0 +1,301 @@
+use Raw;
+
+select * from bronze.Retail1;
+
+Create View vw_orders as
+select	
+	Invoice as Order_id,
+	CAST(InvoiceDate as DATE) AS Order_date,
+	Customer as Customer_id,
+	Country
+from bronze.Retail1
+where 
+	Invoice not like 'C%'
+	AND InvoiceDate is not null
+	AND Customer is not null		
+group by 
+	Invoice,
+	CAST(InvoiceDate as DATE),
+	Customer,
+	Country;
+
+select * from vw_orders;
+
+CREATE VIEW vw_order_item as 
+SELECT 
+	Invoice as Order_ID,
+	StockCode as Product_ID,
+	Quantity ,
+	Price as UnitPrice,
+	Quantity * Price as Sales_amount
+FROM bronze.Retail1
+WHERE 
+	Invoice	NOT LIKE 'C%'
+	AND Quantity > 0
+	AND Price > 0 ;
+
+SELECT Quantity
+FROM bronze.Retail1
+WHERE TRY_CAST(Quantity AS INT) IS NULL
+  AND Quantity IS NOT NULL;
+
+SELECT distinct(Price)
+FROM bronze.Retail1
+WHERE TRY_CAST(Price AS DECIMAL(10,2)) IS NULL
+  AND Price IS NOT NULL;
+
+ALTER Table bronze.Retail1
+ALTER Column Price DECIMAL(10,2) NULL;
+
+SELECT Price
+FROM bronze.Retail1
+WHERE TRY_CAST(Price AS DECIMAL(18,2)) IS NULL
+  AND Price IS NOT NULL;
+
+SELECT Quantity
+FROM bronze.Retail1
+WHERE TRY_CAST(Quantity AS DECIMAL(18,2)) IS NULL
+  AND Quantity IS NOT NULL;
+
+SELECT DISTINCT Price
+FROM bronze.Retail1
+WHERE TRY_CAST(Price AS DECIMAL(18,2)) IS NULL
+  AND Price IS NOT NULL;
+
+SELECT DISTINCT Quantity
+FROM bronze.Retail1
+WHERE TRY_CAST(Quantity AS DECIMAL(18,2)) IS NULL
+  AND Quantity IS NOT NULL;
+
+SELECT Price
+FROM bronze.Retail1
+WHERE TRY_CONVERT(DECIMAL(10,2), Price) IS NULL
+  AND Price IS NOT NULL;
+
+SELECT Quantity
+FROM bronze.Retail1
+WHERE TRY_CONVERT(DECIMAL(10,2), Quantity) IS NULL
+  AND Quantity IS NOT NULL;
+
+
+SELECT
+    COUNT(*) AS TotalRows,
+    COUNT(TRY_CONVERT(DECIMAL(10,2), Price)) AS ValidPrices
+FROM bronze.Retail1;
+
+SELECT
+    COUNT(*) AS TotalRows,
+    COUNT(TRY_CONVERT(DECIMAL(10,2), Quantity)) AS ValidQuantity
+FROM bronze.Retail1;
+
+DELETE FROM bronze.Retail1
+WHERE TRY_CONVERT(DECIMAL(10,2), Price) IS NULL
+  AND Price IS NOT NULL;
+
+DELETE FROM bronze.Retail1
+WHERE TRY_CONVERT(DECIMAL(10,2), Quantity) IS NULL
+  AND Quantity IS NOT NULL;
+
+DELETE FROM bronze.Retail1
+WHERE TRY_CONVERT(DECIMAL(18,2), Quantity) IS NULL
+  AND Quantity IS NOT NULL;
+
+ALTER TABLE bronze.Retail1
+ALTER COLUMN Price DECIMAL(10,2) NULL;
+
+ALTER TABLE bronze.Retail1
+ALTER COLUMN Quantity DECIMAL(10,2) NULL;
+
+sp_help 'bronze.Retail1';
+
+Drop View vw_orders;
+
+Create View vw_orders as
+select	
+	Invoice as Order_id,
+	CAST(InvoiceDate as DATE) AS Order_date,
+	Customer as Customer_id,
+	Country
+from bronze.Retail1
+where 
+	Invoice not like 'C%'
+	AND InvoiceDate is not null
+	AND Customer is not null		
+group by 
+	Invoice,
+	CAST(InvoiceDate as DATE),
+	Customer,
+	Country;
+
+select * from vw_orders;
+
+SELECT InvoiceDate
+FROM bronze.Retail1
+WHERE TRY_CONVERT(DATE, InvoiceDate, 5) IS NULL
+  AND InvoiceDate IS NOT NULL;
+
+ALTER TABLE bronze.Retail1
+ALTER COLUMN InvoiceDate DATE;
+
+SELECT DISTINCT InvoiceDate
+FROM bronze.Retail1
+WHERE TRY_PARSE(InvoiceDate AS DATE USING 'en-GB') IS NULL
+  AND InvoiceDate IS NOT NULL;
+
+SELECT DISTINCT InvoiceDate
+FROM bronze.Retail1
+WHERE TRY_CONVERT(DATE, InvoiceDate, 5) IS NULL
+  AND InvoiceDate IS NOT NULL
+ORDER BY InvoiceDate;
+
+SELECT TOP (20)
+    InvoiceDate,
+    TRY_CONVERT(DATE, InvoiceDate, 5) AS ConvertedDate
+FROM bronze.Retail1;
+
+ALTER TABLE bronze.Retail1
+ADD InvoiceDate_New DATE;
+
+UPDATE bronze.Retail1
+SET InvoiceDate_New = TRY_CONVERT(DATE, InvoiceDate, 5);
+
+SELECT *
+FROM bronze.Retail1
+WHERE InvoiceDate IS NOT NULL
+  AND InvoiceDate_New IS NULL;
+
+	
+
+ALTER TABLE bronze.Retail1
+DROP COLUMN InvoiceDate;
+
+SELECT TOP (10)
+    InvoiceDate_New,
+    LEN(InvoiceDate_New) AS Length,
+    DATALENGTH(InvoiceDate_New) AS DataLength
+FROM bronze.Retail1;
+
+
+Drop View vw_orders;
+
+Create View vw_orders as
+select	
+	Invoice as Order_id,
+	CAST(InvoiceDate_New as DATE) AS Order_date,
+	Customer as Customer_id,
+	Country
+from bronze.Retail1
+where 
+	Invoice not like 'C%'
+	AND InvoiceDate_New is not null
+	AND Customer is not null		
+group by 
+	Invoice,
+	CAST(InvoiceDate_New as DATE),
+	Customer,
+	Country;
+
+Select *  from vw_orders;
+select * from bronze.Retail1;
+
+Create View vw_orders_clean as
+select	
+	Invoice as Order_id,
+	StockCode as Product_id,
+	Quantity,
+	Price,
+	(Quantity * Price) as  Sales_amount
+from bronze.Retail1
+where 
+	Invoice not like 'C%'
+	AND Quantity > 0
+	AND  Price >0
+
+select * from vw_orders_clean;
+select *  from vw_orders;
+
+Create View vw_dim_customer as
+select distinct Customer_id,
+			Country
+from vw_orders;
+
+select * from vw_dim_customer;
+
+select Customer_id,Country
+from  vw_dim_customer
+where Customer_id ='NULL';
+
+Create VIEW vw_dim_date as
+select distinct 
+Order_date as date_key,
+YEAR(Order_date) as Year,
+MONTH(Order_date)  as  Month_number,
+DATENAME(MONTH,Order_date)	as Month_name,
+DATENAME(QUARTER,Order_date)	as Quarter,
+DATEPART(WEEKDAY, Order_date) as weekday_number,
+DATENAME(WEEKDAY, Order_date) as weekday_name
+FROM vw_orders;
+
+select * from vw_dim_date;
+select * from bronze.Retail1;
+
+DROP VIEW vw_dim_products;
+CREATE VIEW	vw_dim_products as
+	SELECT DISTINCT
+		Product_id,
+		Description as Product_name
+	FROM
+	(
+	SELECT 
+		StockCode as Product_id,
+		Description
+	FROM  bronze.Retail1
+	WHERE
+		Invoice NOT LIKE'C%'
+		AND Description IS NOT NULL
+		AND Description <> 'NULL'
+		AND Description <> 'check'
+		AND Description <> 'found'
+		AND Description <> 'damaged'
+		AND Description <> 'damages'
+		AND Description <> 'damages?'
+		AND Description <> '?display?'
+		AND Description <> 'damages/display'
+		AND Description <> 'adjustment'
+		AND Description <> 'returned'
+		AND Description <> 'smashed'
+		AND Description <> 'mailout'
+		AND Description <> 'lost in space'
+		AND Description <> 'wet/rusty'
+		AND Description <> 'wet'
+		AND Description <> 'on cargo order'
+		AND Description <> 'wrongly marked'
+		AND Description <> 'samples'
+		AND Description <> 'dotcom'
+		AND Description <> 'missing'
+		AND Description <> '?'
+		AND Description <> '??'
+		AND Description <> '???'
+		)t;
+
+select * from vw_dim_products;
+
+select * from vw_orders_clean;
+select *  from vw_orders;
+
+CREATE VIEW vw_fact_sales as
+SELECT 
+	oc.Order_id,
+	oc.Product_id,
+	oc.Quantity,
+	oc.Price,
+	oc.Sales_amount,
+	o.Order_date,
+	o.Customer_id,
+	o.Country
+FROM vw_orders_clean oc
+INNER JOIN vw_orders o
+on oc.Order_id =  o.Order_id;
+
+select  * from vw_fact_sales;
+
